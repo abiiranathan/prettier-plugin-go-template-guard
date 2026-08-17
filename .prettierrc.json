@@ -1,0 +1,34 @@
+{
+    "tabWidth": 2,
+    "useTabs": false,
+    "printWidth": 100,
+    "plugins": [
+        "prettier-plugin-go-template-guard",
+        "prettier-plugin-go-template",
+        "prettier-plugin-tailwindcss"
+    ],
+    "overrides": [
+        {
+            "files": [
+                "*.html"
+            ],
+            "options": {
+                "parser": "go-template-guard",
+                "goTemplateBracketSpacing": true,
+                "bracketSameLine": true,
+                "htmlWhitespaceSensitivity": "css"
+            }
+        },
+        {
+            "files": [
+                "*.js",
+                "*.ts"
+            ],
+            "options": {
+                "useTabs": true,
+                "printWidth": 100,
+                "singleQuote": true
+            }
+        }
+    ]
+}

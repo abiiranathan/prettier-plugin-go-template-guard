@@ -1,0 +1,30 @@
+{
+  "name": "prettier-plugin-go-template-guard",
+  "version": "1.0.0",
+  "description": "Wraps prettier-plugin-go-template and fixes multiline Go template actions inside HTML attribute values, which otherwise render as literal whitespace in the attribute.",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "src/"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "prettier",
+    "prettier-plugin",
+    "go-template",
+    "html"
+  ],
+  "license": "ISC",
+  "peerDependencies": {
+    "prettier": ">=3.0.0",
+    "prettier-plugin-go-template": ">=0.0.15"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "prettier-plugin-go-template": "^0.0.15",
+    "prettier-plugin-classnames": "^0.10.4",
+    "prettier-plugin-tailwindcss": "^0.8.1"
+  }
+}
