@@ -2,7 +2,11 @@
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { fixText, containsMultilineActionWhitespace, collapseValue } = require("../src/fixer");
+const {
+  fixText,
+  containsMultilineActionWhitespace,
+  collapseValue,
+} = require("../src/fixer");
 
 test("your original bug: if/action/end split across lines in value attr", () => {
   const input = `<input
@@ -16,7 +20,10 @@ test("your original bug: if/action/end split across lines in value attr", () => 
     class="w-full rounded-md" />`;
 
   const output = fixText(input);
-  assert.match(output, /value="\{\{ if \.ancVisit\.Para \}\}\{\{ \.ancVisit\.Para \}\}\{\{ end \}\}"/);
+  assert.match(
+    output,
+    /value="\{\{ if \.ancVisit\.Para \}\}\{\{ \.ancVisit\.Para \}\}\{\{ end \}\}"/
+  );
   // Untouched siblings must survive exactly.
   assert.match(output, /class="w-full rounded-md"/);
 });
@@ -55,7 +62,10 @@ test("Tailwind conditional class attribute preserves class-boundary spaces", () 
   {{ end }}
   "></div>`;
   const output = fixText(input);
-  assert.match(output, /class="px-2 \{\{ if \.Active \}\} bg-teal-500 \{\{ end \}\}"/);
+  assert.match(
+    output,
+    /class="px-2 \{\{ if \.Active \}\} bg-teal-500 \{\{ end \}\}"/
+  );
 });
 
 test("multiple malformed attributes in the same document are all fixed", () => {
@@ -146,4 +156,113 @@ test("single-quoted Go string literal inside a double-quoted attribute", () => {
 {{ end }}"></div>`;
   const output = fixText(input);
   assert.match(output, /class="\{\{ if eq \.X 'y' \}\} a \{\{ end \}\}"/);
+});
+
+test("Go raw backtick string literal containing double quotes inside double-quoted attribute", () => {
+  const input = `<div class="{{ if eq .Mode \`json "quoted"\` }}
+    font-mono
+  {{ end }}"></div>`;
+
+  const output = fixText(input);
+  assert.match(
+    output,
+    /class="\{\{ if eq \.Mode `json "quoted"` \}\} font-mono \{\{ end \}\}"/
+  );
+});
+
+test("Go string literal with escaped quotes inside action", () => {
+  const input = `<div data-msg="{{ if .HasError }}
+    {{ printf "An error occurred: \\"%s\\"" .Error }}
+  {{ end }}"></div>`;
+
+  const output = fixText(input);
+  assert.match(
+    output,
+    /data-msg="\{\{ if \.HasError \}\}\{\{ printf "An error occurred: \\"%s\\"" \.Error \}\}\{\{ end \}\}"/
+  );
+});
+
+test("Go template comment containing quotes inside multiline attribute", () => {
+  const input = `<div class="{{/* comment with "unescaped quote" inside */}}
+    {{ if .Active }}
+      active
+    {{ end }}
+  "></div>`;
+
+  const output = fixText(input);
+  assert.match(
+    output,
+    /class="\{\{\/\* comment with "unescaped quote" inside \*\/\}\}\{\{ if \.Active \}\} active \{\{ end \}\}"/
+  );
+});
+
+test("Go action containing delimiter `}}` inside string literal", () => {
+  const input = `<div data-template="{{ if .Show }}
+    {{ printf "pattern: }}" }}
+  {{ end }}"></div>`;
+
+  const output = fixText(input);
+  assert.match(
+    output,
+    /data-template="\{\{ if \.Show \}\}\{\{ printf "pattern: \}\}" \}\}\{\{ end \}\}"/
+  );
+});
+
+test("Go rune literal containing double quote inside double-quoted attribute", () => {
+  const input = `<div class="{{ if eq .Char '"' }}
+    has-double-quote
+  {{ end }}"></div>`;
+
+  const output = fixText(input);
+  assert.match(
+    output,
+    /class="\{\{ if eq \.Char '"' \}\} has-double-quote \{\{ end \}\}"/
+  );
+});
+
+test("attribute with escaped quote (`\\\"`) does not prematurely terminate match", () => {
+  const input = `<input
+    placeholder="Search \\"quotes\\" here
+    {{ if .Query }}
+      for: {{ .Query }}
+    {{ end }}"
+  />`;
+
+  const output = fixText(input);
+  assert.match(
+    output,
+    /placeholder="Search \\"quotes\\" here \{\{ if \.Query \}\} for: \{\{ \.Query \}\}\{\{ end \}\}"/
+  );
+});
+
+test("preceding attribute with internal quotes does not desynchronize subsequent multiline attribute", () => {
+  const input = `<button
+    x-data='{ "isOpen": false, "label": "test" }'
+    @click="isOpen = !isOpen"
+    class="{{ if eq .Variant "primary" }}
+      bg-blue-500
+    {{ else }}
+      bg-gray-500
+    {{ end }}"
+  >Click</button>`;
+
+  const output = fixText(input);
+  assert.match(output, /x-data='\{ "isOpen": false, "label": "test" \}'/);
+  assert.match(output, /@click="isOpen = !isOpen"/);
+  assert.match(
+    output,
+    /class="\{\{ if eq \.Variant "primary" \}\} bg-blue-500 \{\{ else \}\} bg-gray-500 \{\{ end \}\}"/
+  );
+});
+
+test("trim markers (`{{-` and `-}}`) containing internal quotes", () => {
+  const input = `<span class="{{- if eq .Type "badge" -}}
+    inline-flex items-center
+  {{- end -}}"></span>`;
+
+  const output = fixText(input);
+  assert.match(
+    output,
+    /class="\{\{- if eq \.Type "badge" -\}\} inline-flex items-center \{\{- end -\}\}"/
+  );
 });
